@@ -1,0 +1,68 @@
+import time
+import requests
+from datetime import datetime,timezone,timedelta
+from io import StringIO
+import pandas as pd
+!pip install fake-useragent
+from fake_useragent import UserAgent
+import random
+from google.colab import files
+import threading
+import datetime as dt
+
+
+def webcrawl(yy,mm):
+  x = yy
+  y = mm
+  user_agent = UserAgent()
+  headers = {
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9", 
+    "Accept-Encoding": "gzip, deflate, br", 
+    "Accept-Language": "zh-TW,zh;q=0.9", 
+    "Host": "https://mops.twse.com.tw/nas/t21/sii/t21sc03_"+x+"_"+y+"_0.html",  #目標網站 
+    "Sec-Fetch-Dest": "document", 
+    "Sec-Fetch-Mode": "navigate", 
+    "Sec-Fetch-Site": "none", 
+    "Upgrade-Insecure-Requests": "1", 
+    "User-Agent": user_agent.random #使用者代理
+  }
+  r = requests.get(url="https://mops.twse.com.tw/nas/t21/sii/t21sc03_"+x+"_"+y+"_0.html", headers = headers)
+  r.encoding = 'big5'
+  dfs = pd.read_html(StringIO(r.text))
+  df = pd.concat([df for df in dfs if df.shape[1] <= 11 and df.shape[1] > 5])
+  df.columns = df.columns.get_level_values(1)
+  df['當月營收'] = pd.to_numeric(df['當月營收'],errors='coerce')
+  df = df[df['公司代號']!='合計']
+  df = df[df['公司代號']!='全部國內上市公司合計']
+  dt1 = datetime.utcnow().replace(tzinfo=timezone.utc)
+  dt2 = dt1.astimezone(timezone(timedelta(hours=8))) # 轉換時區 -> 東八區
+  df['time'] = dt2.strftime("%Y-%m-%d %H:%M:%S")
+  #df['year'] = yy
+  #df['month'] = mm
+  return df
+  
+  
+  df2 = webcrawl('110','8')
+  
+  
+startTime = dt.datetime.now() #開始執行時間
+endTime = dt.datetime.now().replace(hour=10,minute=0,second=0,microsecond=0) #utc時間(tw時間13:30)
+x=0
+while True:
+  if dt.datetime.now() >= endTime:
+    break
+  df1 = df2
+  df2 = webcrawl('110','8')
+  sd = df1.append(df2)
+  new = sd.drop_duplicates(subset=['公司代號'],keep=False) #只保留最新公司
+  if len(new)>0: #有新資料才下載
+    print(new)
+    new.to_csv('最新營收.csv')
+    files.download('最新營收.csv')
+    break
+  else:
+    print("第{}次執行".format(str(x+1))+"時間:"+str(dt.datetime.now()+dt.timedelta(hours=8)))
+    print(df1) #test
+    time.sleep(random.randint(100,240)) 
+    x = x+1
+    startTime = dt.datetime.now()
