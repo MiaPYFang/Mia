@@ -43,9 +43,11 @@ def webcrawl(yy,mm):
   return df
   
   
-df2 = webcrawl('110','8')
+#爬取第一次
+df2 = webcrawl('111','1')
   
   
+#開始重複爬取抓取新資料
 startTime = dt.datetime.now() #開始執行時間
 endTime = dt.datetime.now().replace(hour=10,minute=0,second=0,microsecond=0) #utc時間(tw時間13:30)
 x=0
@@ -53,7 +55,7 @@ while True:
   if dt.datetime.now() >= endTime:
     break
   df1 = df2
-  df2 = webcrawl('110','8')
+  df2 = webcrawl('110','1')
   sd = df1.append(df2)
   new = sd.drop_duplicates(subset=['公司代號'],keep=False) #只保留最新公司
   if len(new)>0: #有新資料才下載
