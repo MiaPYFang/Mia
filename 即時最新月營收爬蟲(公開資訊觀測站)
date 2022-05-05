@@ -49,7 +49,7 @@ df2 = webcrawl('111','1')
   
 #開始重複爬取抓取新資料
 startTime = dt.datetime.now() #開始執行時間
-endTime = dt.datetime.now().replace(hour=10,minute=0,second=0,microsecond=0) #utc時間(tw時間13:30)
+endTime = dt.datetime.now().replace(hour=5,minute=30,second=0,microsecond=0) #utc時間(tw時間13:30)
 x=0
 while True:
   if dt.datetime.now() >= endTime:
